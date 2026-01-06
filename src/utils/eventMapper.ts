@@ -1,5 +1,5 @@
 // src/utils/eventMapper.ts
-import { CalendarEvent } from "../db";
+import { type CalendarEvent } from "../db";
 
 // Simplified Google Event Interface
 interface GoogleEvent {

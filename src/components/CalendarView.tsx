@@ -1,6 +1,6 @@
 // src/components/CalendarView.tsx
 import React, { useMemo, useCallback } from 'react';
-import { Calendar, dateFnsLocalizer, EventProps } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import withDragAndDrop, { EventInteractionArgs } from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
@@ -10,7 +10,7 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import { useEvents } from '../hooks/useEvents';
 import { resolveScheduleConflicts, SchedulerEvent } from '../utils/scheduler';
 import { EventRender } from './EventRender';
-import { CalendarEvent, db } from '../db'; // Direct db access for batch updates if needed, primarily use hooks
+import { type CalendarEvent, db } from '../db'; // Direct db access for batch updates if needed, primarily use hooks
 
 const locales = {
   'en-US': enUS,

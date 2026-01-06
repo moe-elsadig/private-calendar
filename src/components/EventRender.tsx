@@ -1,7 +1,7 @@
 // src/components/EventRender.tsx
 import React from 'react';
 import { FaLock, FaCloudUploadAlt } from 'react-icons/fa';
-import { CalendarEvent } from '../db';
+import { type CalendarEvent } from '../db';
 
 interface EventRenderProps {
   event: CalendarEvent & { title: string }; // react-big-calendar adds generic properties
