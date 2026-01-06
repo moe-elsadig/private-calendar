@@ -3,7 +3,7 @@ import { FaPlus, FaSync, FaGoogle } from 'react-icons/fa';
 import { useEvents } from './hooks/useEvents';
 import { useSync } from './hooks/useSync';
 import { CalendarView } from './components/CalendarView';
-import { findEarliestSlot, SchedulerEvent } from './utils/scheduler';
+import { findEarliestSlot, type SchedulerEvent } from './utils/scheduler';
 import { addMinutes, parseISO } from 'date-fns';
 
 function App() {

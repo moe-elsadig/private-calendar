@@ -1,16 +1,16 @@
 // src/components/CalendarView.tsx
 import React, { useMemo, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import withDragAndDrop, { EventInteractionArgs } from 'react-big-calendar/lib/addons/dragAndDrop';
+import withDragAndDrop, { type EventInteractionArgs } from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 import { useEvents } from '../hooks/useEvents';
-import { resolveScheduleConflicts, SchedulerEvent } from '../utils/scheduler';
+import { resolveScheduleConflicts, type SchedulerEvent } from '../utils/scheduler';
 import { EventRender } from './EventRender';
-import { type CalendarEvent, db } from '../db'; // Direct db access for batch updates if needed, primarily use hooks
+import { type CalendarEvent } from '../db';
 
 const locales = {
   'en-US': enUS,
@@ -24,7 +24,13 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
+// Create a type that extends CalendarEvent but with Date objects for start/end
+interface HydratedCalendarEvent extends Omit<CalendarEvent, 'start' | 'end'> {
+  start: Date;
+  end: Date;
+}
+
+const DnDCalendar = withDragAndDrop<HydratedCalendarEvent>(Calendar);
 
 export const CalendarView: React.FC = () => {
   const { events, updateEvent } = useEvents();
@@ -39,15 +45,18 @@ export const CalendarView: React.FC = () => {
     }));
   }, [events]);
 
-  const onEventDrop = useCallback(async (args: EventInteractionArgs<CalendarEvent>) => {
+  const onEventDrop = useCallback(async (args: EventInteractionArgs<HydratedCalendarEvent>) => {
     const { event, start, end } = args;
     
     // 1. Construct the Proposed Event (with new times)
-    // Note: ISO string conversion is vital here
+    // start and end are string | Date, but coming from RBC they are Date
+    const startStr = start instanceof Date ? start.toISOString() : new Date(start).toISOString();
+    const endStr = end instanceof Date ? end.toISOString() : new Date(end).toISOString();
+
     const proposedEvent: SchedulerEvent = {
         id: event.id,
-        start: start.toISOString(),
-        end: end.toISOString(),
+        start: startStr,
+        end: endStr,
         priority: event.priority
     };
 
@@ -110,10 +119,11 @@ export const CalendarView: React.FC = () => {
 
         await Promise.all(updatePromises);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // 4. Catch Errors (e.g. Locked Event)
         console.error("Move prevented:", error);
-        window.alert(`Move Blocked: ${error.message || 'Unknown schedule conflict'}`);
+        const message = error instanceof Error ? error.message : 'Unknown schedule conflict';
+        window.alert(`Move Blocked: ${message}`);
         // Return false to snap back? RBC doesn't strictly use return value of onEventDrop to snap back,
         // it relies on state update. If we don't update state, it snaps back.
     }
@@ -139,14 +149,15 @@ export const CalendarView: React.FC = () => {
             startAccessor="start"
             endAccessor="end"
             onEventDrop={onEventDrop}
-            draggableAccessor={(event) => true} // All are draggable, but logic might reject drop
+            draggableAccessor={() => true} // All are draggable, but logic might reject drop
             resizable={false} // Simplify for now
             defaultView="week"
             views={['month', 'week', 'day']}
             components={{
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 event: EventRender as any // Type casting due to generic mismatch in RBC types sometimes
             }}
-            eventPropGetter={(event) => {
+            eventPropGetter={() => {
                 // Remove default styles to let our component handle it
                 return {
                     className: '!bg-transparent !p-0 !border-0'

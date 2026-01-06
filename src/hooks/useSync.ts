@@ -31,9 +31,10 @@ export const useSync = () => {
             setLastSyncTime(now);
             localStorage.setItem("lastSyncTime", now);
             console.log("Sync Complete");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Sync Failed", err);
-            setError(err.message || "Sync Failed");
+            const message = err instanceof Error ? err.message : "Sync Failed";
+            setError(message);
         } finally {
             setIsSyncing(false);
         }
